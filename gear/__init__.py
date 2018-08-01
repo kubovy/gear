@@ -3243,7 +3243,7 @@ class Server(BaseClientServer):
         for connection in self.active_connections:
             fd = connection.conn.fileno()
             ip = connection.host
-            client_id = connection.client_id or '-'
+            client_id = connection.client_id or b'-'
             functions = b' '.join(connection.functions).decode('utf8')
             request.connection.sendRaw(("%s %s %s : %s\n" %
                                        (fd, ip, client_id.decode('utf8'),

@@ -205,11 +205,12 @@ class Connection(object):
 
             if self.use_ssl:
                 self.log.debug("Using SSL")
-                s = ssl.wrap_socket(s, ssl_version=ssl.PROTOCOL_TLSv1,
-                                    cert_reqs=ssl.CERT_REQUIRED,
-                                    keyfile=self.ssl_key,
-                                    certfile=self.ssl_cert,
-                                    ca_certs=self.ssl_ca)
+                context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+                context.verify_mode = ssl.CERT_REQUIRED
+                context.check_hostname = False
+                context.load_cert_chain(self.ssl_cert, self.ssl_key)
+                context.load_verify_locations(self.ssl_ca)
+                s = context.wrap_socket(s, server_hostname=self.host)
 
             try:
                 s.connect(sa)
@@ -2851,12 +2852,11 @@ class Server(BaseClientServer):
                     self.log.debug("Accepting new connection")
                     c, addr = self.socket.accept()
                     if self.use_ssl:
-                        c = ssl.wrap_socket(c, server_side=True,
-                                            keyfile=self.ssl_key,
-                                            certfile=self.ssl_cert,
-                                            ca_certs=self.ssl_ca,
-                                            cert_reqs=ssl.CERT_REQUIRED,
-                                            ssl_version=ssl.PROTOCOL_TLSv1)
+                        context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+                        context.verify_mode = ssl.CERT_REQUIRED
+                        context.load_cert_chain(self.ssl_cert, self.ssl_key)
+                        context.load_verify_locations(self.ssl_ca)
+                        c = context.wrap_socket(c, server_side=True)
                     conn = ServerConnection(addr, c, self.use_ssl,
                                             self.client_id)
                     self.log.info("Accepted connection %s" % (conn,))
